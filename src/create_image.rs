@@ -64,36 +64,6 @@ fn draw_soft_centered_rect(
     }
 }
 
-/*
-fn draw_transparent_rect(
-    img: &mut RgbaImage,
-    x: i32,
-    y: i32,
-    width: u32,
-    height: u32,
-    color: Rgba<u8>,
-) {
-    let alpha = color.0[3] as f32 / 255.0; // Alpha-Wert zwischen 0.0 und 1.0
-    for dx in 0..width {
-        for dy in 0..height {
-            let px = x + dx as i32;
-            let py = y + dy as i32;
-
-            if px >= 0 && py >= 0 && px < img.width() as i32 && py < img.height() as i32 {
-                let base_pixel = img.get_pixel(px as u32, py as u32);
-                let blended_pixel = Rgba([
-                    ((1.0 - alpha) * base_pixel[0] as f32 + alpha * color[0] as f32) as u8,
-                    ((1.0 - alpha) * base_pixel[1] as f32 + alpha * color[1] as f32) as u8,
-                    ((1.0 - alpha) * base_pixel[2] as f32 + alpha * color[2] as f32) as u8,
-                    255, // Das Ergebnispixel ist immer voll sichtbar
-                ]);
-                img.put_pixel(px as u32, py as u32, blended_pixel);
-            }
-        }
-    }
-}
-*/
-
 pub fn create_haiku_image(
     haiku: &str,
 ) -> Result<Cursor<Vec<u8>>, Box<dyn std::error::Error>> {
