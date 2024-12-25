@@ -2,23 +2,30 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
     middleware::{self, Next},
-    response::{IntoResponse, Response},
-    routing::post,
+    response::{Html, IntoResponse, Response},
+    routing::{get, post},
     Json, Router,
 };
+use tower_http::services::ServeDir;
 use dotenv::dotenv;
 use serde::Deserialize;
-use std::env;
+use serde_json::{json, Value};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
+use std::{env, fs};
 
 mod create_image;
 use create_image::create_haiku_image;
+
+mod files;
+use files::save_image_to_directory;
 
 #[derive(Deserialize)]
 struct HaikuRequest {
     text: String,
 }
+
+
 
 async fn api_key_middleware(req: Request<Body>, next: Next, api_key: String) -> Response {
     // API-Key validieren
@@ -50,8 +57,19 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
 
     match create_haiku_image(haiku) {
         Ok(buffer) => {
-            let body = buffer.into_inner();
-            ([("Content-Type", "image/webp")], body).into_response()
+            let image_data = buffer.into_inner();
+
+            // Bild speichern, wenn die Umgebungsvariable gesetzt ist
+            if let Ok(save_enabled) = env::var("SAVE_IMAGES") {
+                if save_enabled == "true" {
+                    if let Err(e) = save_image_to_directory(image_data.clone(), haiku) {
+                        eprintln!("Fehler beim Speichern des Bildes: {}", e);
+                    }
+                }
+            }
+
+            // Bild per HTTP zurückgeben
+            ([("Content-Type", "image/webp")], image_data).into_response()
         }
         Err(e) => {
             // Fehlertext aus dem Fehler-Object extrahieren
@@ -64,6 +82,33 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
     }
 }
 
+
+async fn get_json() -> Json<Value> {
+    // Pfad zur JSON-Datei
+    let file_path = "haikus/images.json";
+
+    // Datei einlesen
+    match fs::read_to_string(file_path) {
+        Ok(content) => {
+            // Inhalt in JSON umwandeln
+            match serde_json::from_str::<Value>(&content) {
+                Ok(json_data) => Json(json_data),
+                Err(_) => Json(json!({ "error": "Ungültiges JSON-Format in Datei" })),
+            }
+        }
+        Err(_) => Json(json!({ "error": "Datei konnte nicht gelesen werden" })),
+    }
+}
+
+async fn serve_images() -> Html<String> {
+    let file_path = "haikus/index.html";
+
+    match fs::read_to_string(file_path) {
+        Ok(content) => Html(content),
+        Err(_) => Html("<h1>Fehler: Datei konnte nicht gelesen werden</h1>".to_string()),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     dotenv().ok(); // .env-Datei laden
@@ -73,11 +118,18 @@ async fn main() {
     let api_key = env::var("API_KEY").expect("API_KEY muss in .env definiert sein!");
 
     // Router erstellen
-    let app = Router::new()
+    let haiku_router = Router::new()
         .route("/haiku", post(serve_haiku_image))
         .layer(middleware::from_fn(move |req, next| {
             api_key_middleware(req, next, api_key.clone())
         }));
+
+    let general_router = Router::new()
+        .route("/json", get(get_json))
+        .route("/images", get(serve_images))
+        .nest_service("/files", ServeDir::new("haikus")); // Bilder aus dem Verzeichnis "haikus" bereitstellen
+
+    let app = haiku_router.merge(general_router);
 
     // Server starten
     let addr: SocketAddr = server_addr.parse().expect("Ungültige Serveradresse");

@@ -105,18 +105,6 @@ pub fn create_haiku_image(
         30, // Weichheit der Kanten
     );
 
-    /*
-    // Halbtransparentes Rechteck zeichnen
-    draw_transparent_rect(
-        &mut img,
-        rect_x,
-        rect_y,
-        rect_width as u32,
-        rect_height as u32,
-        RECT_COLOR,
-    );
-    */
-
     // Zentrierte Y-Position
     let mut y_offset = (height as i32 - total_text_height) / 2;
 
@@ -148,20 +136,7 @@ pub fn create_haiku_image(
         // Zentrierte X-Position
         let x_pos = ((width as f32 - text_width) / 2.0) as i32;
 
-        /*
-        // Schlagschatten zeichnen (leicht versetzt)
-        draw_text_mut(
-            &mut img,
-            SHADOW_COLOR,
-            x_pos + 2,    // x-Position leicht nach rechts
-            y_offset + 2, // y-Position leicht nach unten
-            scale,
-            &font,
-            line,
-        );
-        */
-
-        // Haupttext zeichnen
+        // Text zeichnen
         draw_text_mut(&mut img, TEXT_COLOR, x_pos, y_offset, scale, &font, line);
         y_offset += line_height;
     }
