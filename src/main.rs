@@ -6,13 +6,13 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use tower_http::services::ServeDir;
 use dotenv::dotenv;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::net::SocketAddr;
-use tokio::net::TcpListener;
 use std::{env, fs};
+use tokio::net::TcpListener;
+use tower_http::services::ServeDir;
 
 mod create_image;
 use create_image::create_haiku_image;
@@ -24,8 +24,6 @@ use files::save_image_to_directory;
 struct HaikuRequest {
     text: String,
 }
-
-
 
 async fn api_key_middleware(req: Request<Body>, next: Next, api_key: String) -> Response {
     // API-Key validieren
@@ -82,7 +80,6 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
     }
 }
 
-
 async fn get_json() -> Json<Value> {
     // Pfad zur JSON-Datei
     let file_path = "haikus/images.json";
@@ -101,12 +98,12 @@ async fn get_json() -> Json<Value> {
 }
 
 async fn serve_images() -> Html<String> {
-    let file_path = "haikus/index.html";
+    let template: &str = include_str!("../assets/index.html");
 
-    match fs::read_to_string(file_path) {
-        Ok(content) => Html(content),
-        Err(_) => Html("<h1>Fehler: Datei konnte nicht gelesen werden</h1>".to_string()),
-    }
+    let addr = env::var("SERVER_ADDR").expect("Server-IP und -Port müssen in .env definiert sein!");
+    let html_content = template.replace("{{ addr }}", &addr);
+
+    Html(html_content)
 }
 
 #[tokio::main]
@@ -125,9 +122,9 @@ async fn main() {
         }));
 
     let general_router = Router::new()
-        .route("/json", get(get_json))
-        .route("/images", get(serve_images))
-        .nest_service("/files", ServeDir::new("haikus")); // Bilder aus dem Verzeichnis "haikus" bereitstellen
+        .route("/haiku/json", get(get_json))
+        .route("/haiku/images", get(serve_images))
+        .nest_service("/haiku/files", ServeDir::new("haikus")); // Bilder aus dem Verzeichnis "haikus" bereitstellen
 
     let app = haiku_router.merge(general_router);
 
