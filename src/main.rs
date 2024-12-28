@@ -42,14 +42,12 @@ async fn api_key_middleware(req: Request<Body>, next: Next, api_key: String) -> 
         "Ungültiger oder fehlender API-Schlüssel: {:?}",
         key.unwrap_or("None")
     );
-    (
-        StatusCode::UNAUTHORIZED,
-        "Unauthorized: Missing or invalid API key",
-    )
-        .into_response()
+    StatusCode::UNAUTHORIZED.into_response()
 }
 
 // HTTP-Handler
+
+// /haiku
 async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
     let haiku = &payload.text;
 
@@ -80,6 +78,7 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
     }
 }
 
+// /haiku/json
 async fn get_json() -> Json<Value> {
     // Pfad zur JSON-Datei
     let file_path = "haikus/images.json";
@@ -97,9 +96,9 @@ async fn get_json() -> Json<Value> {
     }
 }
 
+// /haiku/images
 async fn serve_images() -> Html<String> {
     let template: &str = include_str!("../assets/index.html");
-
     let addr = env::var("SERVER_ADDR").expect("Server-IP und -Port müssen in .env definiert sein!");
     let html_content = template.replace("{{ addr }}", &addr);
 
