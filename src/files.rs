@@ -1,12 +1,8 @@
 use serde::Serialize;
-use std::{
-    fs,
-    io,
-    path::Path
-};
-use walkdir::WalkDir;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, io::Write};
+use std::{fs, io, path::Path};
+use walkdir::WalkDir;
 
 #[derive(Serialize)]
 struct ImageList {
@@ -18,7 +14,10 @@ fn is_image_file(entry: &Path) -> bool {
         .extension()
         .and_then(|ext| ext.to_str())
         .map_or(false, |ext| {
-            matches!(ext.to_lowercase().as_str(), "jpg" | "jpeg" | "png" | "gif" | "webp")
+            matches!(
+                ext.to_lowercase().as_str(),
+                "jpg" | "jpeg" | "png" | "gif" | "webp"
+            )
         })
 }
 
@@ -32,13 +31,14 @@ fn collect_image_files(dir: &Path) -> io::Result<ImageList> {
                 .file_name()
                 .to_str()
                 .map(String::from)
-                .ok_or_else(|| {
-                    io::Error::new(io::ErrorKind::InvalidData, "Invalid filename")
-                })
+                .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Invalid filename"))
         })
         .collect();
 
-    images.map(|images| ImageList { images })
+    images.map(|mut images| {
+        images.reverse();
+        ImageList { images }
+    })
 }
 
 fn create_json(save_dir: &Path) -> io::Result<()> {
@@ -72,7 +72,7 @@ pub fn save_image_to_directory(
     // Bild in die Datei schreiben
     let mut file = fs::File::create(file_path)?;
     file.write_all(&image_data)?;
-    
+
     if let Err(e) = create_json(dir_path) {
         eprintln!("Fehler beim Erzeugen der JSON-Datei: {}", e);
     }
