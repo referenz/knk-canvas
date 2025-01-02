@@ -8,9 +8,8 @@ use axum::{
 };
 use dotenv::dotenv;
 use serde::Deserialize;
-use serde_json::{json, Value};
-use std::net::SocketAddr;
-use std::{env, fs};
+use std::{net::SocketAddr, path::Path};
+use std::env;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
@@ -18,7 +17,7 @@ mod create_image;
 use create_image::create_haiku_image;
 
 mod files;
-use files::save_image_to_directory;
+use files::{save_image_to_directory, to_js_list};
 
 #[derive(Deserialize)]
 struct HaikuRequest {
@@ -47,7 +46,7 @@ async fn api_key_middleware(req: Request<Body>, next: Next, api_key: String) -> 
 
 // HTTP-Handler
 
-// /haiku
+// POST /haiku
 async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
     let haiku = &payload.text;
 
@@ -78,29 +77,15 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
     }
 }
 
-// /haiku/json
-async fn get_json() -> Json<Value> {
-    // Pfad zur JSON-Datei
-    let file_path = "haikus/images.json";
 
-    // Datei einlesen
-    match fs::read_to_string(file_path) {
-        Ok(content) => {
-            // Inhalt in JSON umwandeln
-            match serde_json::from_str::<Value>(&content) {
-                Ok(json_data) => Json(json_data),
-                Err(_) => Json(json!({ "error": "Ungültiges JSON-Format in Datei" })),
-            }
-        }
-        Err(_) => Json(json!({ "error": "Datei konnte nicht gelesen werden" })),
-    }
-}
-
-// /haiku/images
+// GET /haiku
 async fn serve_images() -> Html<String> {
     let template: &str = include_str!("../assets/index.html");
-    let addr = env::var("SERVER_ADDR").expect("Server-IP und -Port müssen in .env definiert sein!");
-    let html_content = template.replace("{{ addr }}", &addr);
+    //let addr = env::var("SERVER_ADDR").expect("Server-IP und -Port müssen in .env definiert sein!");
+    //let html_content = template.replace("{{ addr }}", &addr);
+    let save_dir = env::var("IMAGE_SAVE_DIR").expect("IMAGE_SAVE_DIR muss in .env definiert sein!");
+    let dir_path = Path::new(&save_dir);
+    let html_content = template.replace("{{ dateien }}", &to_js_list(dir_path).unwrap());
 
     Html(html_content)
 }
@@ -121,8 +106,8 @@ async fn main() {
         }));
 
     let general_router = Router::new()
-        .route("/haiku/json", get(get_json))
-        .route("/haiku/images", get(serve_images))
+        //.route("/haiku/json", get(get_json))
+        .route("/haiku", get(serve_images))
         .nest_service("/haiku/files", ServeDir::new("haikus")); // Bilder aus dem Verzeichnis "haikus" bereitstellen
 
     let app = haiku_router.merge(general_router);

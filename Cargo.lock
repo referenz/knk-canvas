@@ -666,7 +666,6 @@ dependencies = [
  "dotenv",
  "imageproc",
  "serde",
- "serde_json",
  "tokio",
  "tower-http",
  "walkdir",

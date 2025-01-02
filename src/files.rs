@@ -1,12 +1,21 @@
-use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, io::Write};
 use std::{fs, io, path::Path};
 use walkdir::WalkDir;
 
-#[derive(Serialize)]
 struct ImageList {
     images: Vec<String>,
+}
+
+impl ImageList {
+    /// Gibt die Bilder als kommagetrennte Liste in Anführungszeichen zurück.
+    fn to_comma_separated(&self) -> String {
+        self.images
+            .iter()
+            .map(|image| format!("\"{}\"", image)) // Setzt jeden Eintrag in Anführungszeichen
+            .collect::<Vec<_>>() // Sammelt die Einträge in einen Vektor
+            .join(", ") // Verbindet sie mit Kommas
+    }
 }
 
 fn is_image_file(entry: &Path) -> bool {
@@ -41,12 +50,9 @@ fn collect_image_files(dir: &Path) -> io::Result<ImageList> {
     })
 }
 
-fn create_json(save_dir: &Path) -> io::Result<()> {
-    let output_path = save_dir.join("images.json");
+pub fn to_js_list(save_dir: &Path) -> io::Result<String> {
     let image_list = collect_image_files(&save_dir)?;
-    let json_data = serde_json::to_string_pretty(&image_list)?;
-    fs::write(&output_path, json_data.as_bytes())?;
-    Ok(())
+    Ok(image_list.to_comma_separated())
 }
 
 pub fn save_image_to_directory(
@@ -72,10 +78,6 @@ pub fn save_image_to_directory(
     // Bild in die Datei schreiben
     let mut file = fs::File::create(file_path)?;
     file.write_all(&image_data)?;
-
-    if let Err(e) = create_json(dir_path) {
-        eprintln!("Fehler beim Erzeugen der JSON-Datei: {}", e);
-    }
 
     Ok(())
 }
