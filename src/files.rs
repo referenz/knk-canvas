@@ -58,7 +58,7 @@ pub fn to_js_list(save_dir: &Path) -> io::Result<String> {
 pub fn save_image_to_directory(
     image_data: Vec<u8>,
     haiku_text: &str,
-) -> Result<(), std::io::Error> {
+) -> io::Result<()> {
     let save_dir = env::var("IMAGE_SAVE_DIR").expect("IMAGE_SAVE_DIR muss in .env definiert sein!");
     let dir_path = Path::new(&save_dir);
 

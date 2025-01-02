@@ -44,7 +44,7 @@ async fn api_key_middleware(req: Request<Body>, next: Next, api_key: String) -> 
     StatusCode::UNAUTHORIZED.into_response()
 }
 
-// HTTP-Handler
+// *HTTP-Handler*
 
 // POST /haiku
 async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
@@ -106,7 +106,6 @@ async fn main() {
         }));
 
     let general_router = Router::new()
-        //.route("/haiku/json", get(get_json))
         .route("/haiku", get(serve_images))
         .nest_service("/haiku/files", ServeDir::new("haikus")); // Bilder aus dem Verzeichnis "haikus" bereitstellen
 
