@@ -81,12 +81,15 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
 // GET /haiku
 async fn serve_images() -> Html<String> {
     let template: &str = include_str!("../assets/index.html");
-    //let addr = env::var("SERVER_ADDR").expect("Server-IP und -Port müssen in .env definiert sein!");
-    //let html_content = template.replace("{{ addr }}", &addr);
     let save_dir = env::var("IMAGE_SAVE_DIR").expect("IMAGE_SAVE_DIR muss in .env definiert sein!");
     let dir_path = Path::new(&save_dir);
-    let html_content = template.replace("{{ dateien }}", &to_js_list(dir_path).unwrap());
 
+    let Ok(js_list) = to_js_list(dir_path) else {
+        eprintln!("Fehler beim Erstellen der Bilderliste.");
+        return Html("<p>Fehler: Bilderliste konnte nicht generiert werden</p>".to_string());
+    };
+
+    let html_content = template.replace("{{ dateien }}", &js_list);
     Html(html_content)
 }
 
