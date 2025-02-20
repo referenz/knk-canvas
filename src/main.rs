@@ -8,8 +8,8 @@ use axum::{
 };
 use dotenv::dotenv;
 use serde::Deserialize;
-use std::{net::SocketAddr, path::Path};
 use std::env;
+use std::{net::SocketAddr, path::Path};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 
@@ -77,10 +77,10 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
     }
 }
 
-
 // GET /haiku
+const HTML_TEMPLATE: &str = include_str!("../assets/index.html");
+
 async fn serve_images() -> Html<String> {
-    let template: &str = include_str!("../assets/index.html");
     let save_dir = env::var("IMAGE_SAVE_DIR").expect("IMAGE_SAVE_DIR muss in .env definiert sein!");
     let dir_path = Path::new(&save_dir);
 
@@ -89,7 +89,7 @@ async fn serve_images() -> Html<String> {
         return Html("<p>Fehler: Bilderliste konnte nicht generiert werden</p>".to_string());
     };
 
-    let html_content = template.replace("{{ dateien }}", &js_list);
+    let html_content = HTML_TEMPLATE.replace("{{ dateien }}", &js_list);
     Html(html_content)
 }
 

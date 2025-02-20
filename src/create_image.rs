@@ -8,6 +8,8 @@ use imageproc::{
 
 const BACKGROUND_IMAGE: &[u8] = include_bytes!("../assets/Tile1.webp");
 const TEXT_COLOR: Rgba<u8> = Rgba([70, 50, 40, 255]);
+
+const FONT_DATA: &[u8] = include_bytes!("../assets/LeagueSpartan-Medium.ttf");
 /*
 const SHADOW_COLOR: Rgba<u8> = Rgba([50, 50, 50, 80]);
 const RECT_COLOR: Rgba<u8> = Rgba([220, 210, 200, 80]);
@@ -64,9 +66,7 @@ fn draw_soft_centered_rect(
     }
 }
 
-pub fn create_haiku_image(
-    haiku: &str,
-) -> Result<Cursor<Vec<u8>>, Box<dyn std::error::Error>> {
+pub fn create_haiku_image(haiku: &str) -> Result<Cursor<Vec<u8>>, Box<dyn std::error::Error>> {
     // Bild einlesen
     let img_result = image::load_from_memory(BACKGROUND_IMAGE)
         .map_err(|e| format!("Konnte das eingebettete Hintergrundbild nicht laden: {}", e))?;
@@ -75,8 +75,7 @@ pub fn create_haiku_image(
     let (width, height) = img.dimensions();
 
     // Schriftart laden
-    let font_data = include_bytes!("../assets/LeagueSpartan-Medium.ttf");
-    let font = FontArc::try_from_slice(font_data)?;
+    let font = FontArc::try_from_slice(FONT_DATA)?;
 
     // Schriftgröße festlegen
     let scale = PxScale::from(55.0);
@@ -93,7 +92,7 @@ pub fn create_haiku_image(
     let rect_height = total_text_height + 60; // Zusätzlicher Rand
     let rect_x = (width as i32 - rect_width) / 2;
     let rect_y = ((height as i32 - rect_height) / 2) + descent as i32;
-    
+
     // Weiches Rechteck zeichnen
     draw_soft_centered_rect(
         &mut img,
@@ -102,7 +101,7 @@ pub fn create_haiku_image(
         rect_width as u32,
         rect_height as u32,
         Rgba([220, 210, 200, 200]), // Warmer Farbton mit leichter Transparenz
-        30, // Weichheit der Kanten
+        30,                         // Weichheit der Kanten
     );
 
     // Zentrierte Y-Position
@@ -144,12 +143,7 @@ pub fn create_haiku_image(
     // Bild als WebP kodieren
     let mut buffer = Cursor::new(Vec::new());
     let encoder = WebPEncoder::new_lossless(&mut buffer);
-    encoder.encode(
-        &img,
-        img.width(),
-        img.height(),
-        ColorType::Rgba8.into(),
-    )?;
+    encoder.encode(&img, img.width(), img.height(), ColorType::Rgba8.into())?;
 
     Ok(buffer)
 }
