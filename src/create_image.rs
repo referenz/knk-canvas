@@ -3,7 +3,9 @@ use std::io::Cursor;
 use ab_glyph::{Font, FontArc, GlyphId, PxScale, ScaleFont};
 use imageproc::{
     drawing::draw_text_mut,
-    image::{self, codecs::webp::WebPEncoder, ColorType, ImageBuffer, Rgba, RgbaImage},
+    image::{
+        self, DynamicImage, ImageFormat, ImageBuffer, Rgba, RgbaImage
+    },
 };
 
 const BACKGROUND_IMAGE: &[u8] = include_bytes!("../assets/Tile1.webp");
@@ -140,10 +142,19 @@ pub fn create_haiku_image(haiku: &str) -> Result<Cursor<Vec<u8>>, Box<dyn std::e
         y_offset += line_height;
     }
 
-    // Bild als WebP kodieren
+    /* 
     let mut buffer = Cursor::new(Vec::new());
-    let encoder = WebPEncoder::new_lossless(&mut buffer);
-    encoder.encode(&img, img.width(), img.height(), ColorType::Rgba8.into())?;
+    let encoder = AvifEncoder::new(&mut buffer);
+    encoder.write_image(
+        img.as_raw(),
+        img.width(),
+        img.height(),
+        ColorType::Rgba8.into(),
+    )?;
+    */
+    let mut buffer = Cursor::new(Vec::new());
+    let out_img = DynamicImage::ImageRgba8(img);
+    out_img.write_to(&mut buffer, ImageFormat::Avif)?;
 
     Ok(buffer)
 }

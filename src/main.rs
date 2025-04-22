@@ -64,7 +64,7 @@ async fn serve_haiku_image(Json(payload): Json<HaikuRequest>) -> Response {
             }
 
             // Bild per HTTP zurückgeben
-            ([("Content-Type", "image/webp")], image_data).into_response()
+            ([("Content-Type", "image/avif")], image_data).into_response()
         }
         Err(e) => {
             // Fehlertext aus dem Fehler-Object extrahieren

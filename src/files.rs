@@ -25,7 +25,7 @@ fn is_image_file(entry: &Path) -> bool {
         .map_or(false, |ext| {
             matches!(
                 ext.to_lowercase().as_str(),
-                "jpg" | "jpeg" | "png" | "gif" | "webp"
+                "jpg" | "jpeg" | "png" | "gif" | "webp" | "avif"
             )
         })
 }
@@ -72,7 +72,7 @@ pub fn save_image_to_directory(
         .duration_since(UNIX_EPOCH)
         .expect("Systemzeit konnte nicht ermittelt werden")
         .as_secs(); // Zeitstempel in Sekunden
-    let filename = format!("haiku_{}_{}.webp", timestamp, haiku_text.len());
+    let filename = format!("haiku_{}_{}.avif", timestamp, haiku_text.len());
     let file_path = dir_path.join(filename);
 
     // Bild in die Datei schreiben
