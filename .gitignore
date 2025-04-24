@@ -1,5 +1,6 @@
 /target
 /assets/*.ttf
 /assets/*.webp
+/assets/*.avif
 .env
 /haikus/

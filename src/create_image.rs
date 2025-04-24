@@ -4,7 +4,7 @@ use ab_glyph::{Font, FontArc, GlyphId, PxScale, ScaleFont};
 use imageproc::{
     drawing::draw_text_mut,
     image::{
-        self, DynamicImage, ImageFormat, ImageBuffer, Rgba, RgbaImage
+        self, codecs::avif::AvifEncoder, ColorType, ImageEncoder, ImageBuffer, Rgba, RgbaImage
     },
 };
 
@@ -142,19 +142,17 @@ pub fn create_haiku_image(haiku: &str) -> Result<Cursor<Vec<u8>>, Box<dyn std::e
         y_offset += line_height;
     }
 
-    /* 
-    let mut buffer = Cursor::new(Vec::new());
-    let encoder = AvifEncoder::new(&mut buffer);
+    Ok(Cursor::new(encode_image_to_avif(&img)?))
+}
+
+fn encode_image_to_avif(image: &RgbaImage) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let mut buffer = Vec::new();
+    let encoder = AvifEncoder::new_with_speed_quality(&mut buffer, 4, 65);
     encoder.write_image(
-        img.as_raw(),
-        img.width(),
-        img.height(),
+        image.as_raw(),
+        image.width(),
+        image.height(),
         ColorType::Rgba8.into(),
     )?;
-    */
-    let mut buffer = Cursor::new(Vec::new());
-    let out_img = DynamicImage::ImageRgba8(img);
-    out_img.write_to(&mut buffer, ImageFormat::Avif)?;
-
     Ok(buffer)
 }
